@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Trade, TradingPlatform, TradeType, TradeStatus } from '../types/trading';
 import { calculateTradeMetrics, formatINR } from '../utils/calculations';
-import { Plus, X, Calculator, ShieldCheck } from 'lucide-react';
+import { X } from 'lucide-react';
 
 interface TradeEntryModalProps {
   isOpen: boolean;

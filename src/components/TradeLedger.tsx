@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Trade } from '../types/trading';
 import { calculateTradeMetrics, formatINR, formatPercent } from '../utils/calculations';
-import { Search, Filter, Edit2, Trash2, ArrowUpDown, ChevronDown, CheckCircle2, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Search, Edit2, Trash2 } from 'lucide-react';
 
 interface TradeLedgerProps {
   trades: Trade[];

@@ -5,12 +5,8 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  TrendingUp,
-  TrendingDown,
   Award,
   AlertTriangle,
-  Receipt,
-  Layers,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -20,8 +16,6 @@ import {
   YAxis,
   Tooltip,
   Cell,
-  LineChart,
-  Line,
   CartesianGrid,
 } from 'recharts';
 

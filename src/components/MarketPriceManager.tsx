@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Trade } from '../types/trading';
 import { formatINR } from '../utils/calculations';
-import { Radio, RefreshCw, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Radio, RefreshCw, Clock } from 'lucide-react';
 
 interface MarketPriceManagerProps {
   openTrades: Trade[];

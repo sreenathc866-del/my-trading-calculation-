@@ -7,11 +7,10 @@ import {
   Award,
   AlertOctagon,
   Percent,
-  Activity,
-  CheckCircle2,
   Calendar,
   Sparkles,
-  ArrowRight,
+  CheckCircle2,
+  Activity,
 } from 'lucide-react';
 import {
   BarChart,
@@ -21,8 +20,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  PieChart,
-  Pie,
 } from 'recharts';
 
 interface TradingInsightsProps {

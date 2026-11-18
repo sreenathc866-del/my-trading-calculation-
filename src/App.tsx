@@ -7,8 +7,6 @@ import {
   getAllCapitalTransactions,
   saveCapitalTransaction,
   deleteCapitalTransaction,
-  bulkInsertTrades,
-  bulkInsertCapital,
 } from './services/storageService';
 import {
   calculateDashboardSummary,
@@ -24,8 +22,6 @@ import { TradingInsights } from './components/TradingInsights';
 import { MarketPriceManager } from './components/MarketPriceManager';
 import { TradeLedger } from './components/TradeLedger';
 import {
-  TrendingUp,
-  TrendingDown,
   Wallet,
   Plus,
   Database,
@@ -38,11 +34,8 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Sparkles,
-  Layers,
   Activity,
   ShieldCheck,
-  Building2,
-  Percent,
 } from 'lucide-react';
 
 export function App() {
@@ -71,88 +64,15 @@ export function App() {
     }
   }, [darkMode]);
 
-  // Load initial data from IndexedDB
+  // Load data from IndexedDB
   const loadData = async () => {
     setIsLoading(true);
     try {
       const storedTrades = await getAllTrades();
       const storedCapital = await getAllCapitalTransactions();
 
-      if (storedTrades.length === 0 && storedCapital.length === 0) {
-        const todayStr = new Date().toISOString().slice(0, 10);
-        const sampleCapital: CapitalTransaction = {
-          id: 'cap_initial',
-          date: todayStr,
-          type: 'Initial',
-          amount: 250000,
-          platform: 'Groww',
-          notes: 'Primary trading allocation',
-          createdAt: Date.now(),
-        };
-
-        const sampleTrades: Trade[] = [
-          {
-            id: 'tr_1',
-            date: todayStr,
-            assetName: 'Tata Motors',
-            symbol: 'TATAMOTORS',
-            platform: 'Groww',
-            tradeType: 'Delivery',
-            buyPrice: 950,
-            sellPrice: 1045,
-            quantity: 50,
-            brokerage: 20,
-            taxesAndCharges: 18,
-            status: 'Closed',
-            notes: 'Breakout above monthly pivot level with surge in volume',
-            createdAt: Date.now() - 3600000,
-            updatedAt: Date.now(),
-          },
-          {
-            id: 'tr_2',
-            date: todayStr,
-            assetName: 'Reliance Industries',
-            symbol: 'RELIANCE',
-            platform: 'Zerodha',
-            tradeType: 'Intraday',
-            buyPrice: 2820,
-            sellPrice: 2790,
-            quantity: 20,
-            brokerage: 40,
-            taxesAndCharges: 12,
-            status: 'Closed',
-            notes: 'Intraday pullback stop loss hit near VWAP',
-            createdAt: Date.now() - 7200000,
-            updatedAt: Date.now(),
-          },
-          {
-            id: 'tr_3',
-            date: todayStr,
-            assetName: 'Infosys',
-            symbol: 'INFY',
-            platform: 'Groww',
-            tradeType: 'Delivery',
-            buyPrice: 1860,
-            sellPrice: 0,
-            currentMarketPrice: 1915,
-            quantity: 35,
-            brokerage: 20,
-            taxesAndCharges: 15,
-            status: 'Open',
-            notes: 'Swing trade target 1980, trailing stop 1845',
-            createdAt: Date.now() - 10000000,
-            updatedAt: Date.now(),
-          },
-        ];
-
-        await bulkInsertCapital([sampleCapital]);
-        await bulkInsertTrades(sampleTrades);
-        setCapital([sampleCapital]);
-        setTrades(sampleTrades);
-      } else {
-        setTrades(storedTrades);
-        setCapital(storedCapital);
-      }
+      setTrades(storedTrades);
+      setCapital(storedCapital);
     } catch (e) {
       console.error('Failed to load from IndexedDB', e);
     } finally {
