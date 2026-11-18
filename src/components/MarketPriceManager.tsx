@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Trade } from '../types/trading';
 import { formatINR } from '../utils/calculations';
-import { RefreshCw, Radio, CheckCircle, Clock, Edit3, AlertCircle } from 'lucide-react';
+import { Radio, RefreshCw, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
 
 interface MarketPriceManagerProps {
   openTrades: Trade[];
@@ -12,8 +12,6 @@ export const MarketPriceManager: React.FC<MarketPriceManagerProps> = ({
   openTrades,
   onUpdatePrices,
 }) => {
-  const [isApiConnected, setIsApiConnected] = useState<boolean>(false);
-  const [apiKey, setApiKey] = useState<string>('');
   const [manualPrices, setManualPrices] = useState<Record<string, number>>({});
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -28,7 +26,10 @@ export const MarketPriceManager: React.FC<MarketPriceManagerProps> = ({
   const saveManualPrices = () => {
     const updates = openTrades.map((t) => ({
       id: t.id,
-      currentMarketPrice: manualPrices[t.id] !== undefined ? manualPrices[t.id] : (t.currentMarketPrice || t.buyPrice),
+      currentMarketPrice:
+        manualPrices[t.id] !== undefined
+          ? manualPrices[t.id]
+          : (t.currentMarketPrice || t.buyPrice),
     }));
     onUpdatePrices(updates);
     setLastUpdated(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }));
@@ -36,10 +37,8 @@ export const MarketPriceManager: React.FC<MarketPriceManagerProps> = ({
 
   const handleSimulateApiFetch = async () => {
     setIsLoading(true);
-    // Simulating API latency / price fetch
     setTimeout(() => {
       const updates = openTrades.map((t) => {
-        // Small realistic market variation +/- 1.5% from current or buy price
         const base = t.currentMarketPrice || t.buyPrice;
         const variation = (Math.random() * 0.04 - 0.015);
         const newCmp = Math.round((base * (1 + variation)) * 100) / 100;
@@ -51,152 +50,137 @@ export const MarketPriceManager: React.FC<MarketPriceManagerProps> = ({
       onUpdatePrices(updates);
       setLastUpdated(new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' }));
       setIsLoading(false);
-    }, 800);
+    }, 600);
   };
 
   if (openTrades.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 text-center">
-        <Radio className="mx-auto h-8 w-8 text-slate-400 mb-2" />
-        <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-          No Open Positions
+      <div className="rounded-xl border border-zinc-200 bg-white p-8 dark:border-zinc-800 dark:bg-[#111726] text-center">
+        <Radio className="mx-auto h-7 w-7 text-zinc-400 mb-2" />
+        <h4 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+          No Active Open Positions
         </h4>
-        <p className="text-xs text-slate-400 mt-1">
-          When you hold open or delivery trades, you can configure live prices or enter current market prices here to update unrealized P&L in real-time.
+        <p className="text-xs text-zinc-400 mt-1 max-w-md mx-auto">
+          When you hold open delivery or swing positions, you can monitor and calibrate real-time Current Market Prices (CMP) here to maintain accurate unrealized P&L.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-[#111726] space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
         <div>
           <div className="flex items-center gap-2">
-            <Radio className="h-5 w-5 text-indigo-500" />
-            <h4 className="text-base font-bold text-slate-800 dark:text-slate-100">
-              Market Price Updates & CMP Configuration
+            <Radio className="h-4 w-4 text-emerald-500 animate-pulse" />
+            <h4 className="text-sm font-bold uppercase tracking-wider text-zinc-900 dark:text-zinc-100">
+              Live CMP Calibration Matrix
             </h4>
           </div>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Retrieve latest quotes or enter manual CMP for Open holding positions.
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+            Calibrate current market quote for active open holdings without altering realized trades
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {lastUpdated && (
-            <span className="flex items-center gap-1 text-xs text-slate-400">
-              <Clock className="h-3.5 w-3.5" />
-              Updated at {lastUpdated} IST
+            <span className="flex items-center gap-1 text-[11px] font-mono-num text-zinc-400 mr-2">
+              <Clock className="h-3 w-3" /> Updated: {lastUpdated}
             </span>
           )}
 
           <button
             onClick={handleSimulateApiFetch}
             disabled={isLoading}
-            className="flex items-center gap-1.5 rounded-xl bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 cursor-pointer"
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh Quotes
+            <span>Simulate Market Feed</span>
+          </button>
+
+          <button
+            onClick={saveManualPrices}
+            className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 text-xs font-semibold shadow-xs cursor-pointer"
+          >
+            Commit CMP Values
           </button>
         </div>
       </div>
 
-      {/* API connection option */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3.5 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300">
-        <div className="flex items-center gap-2">
-          <div className={`h-2.5 w-2.5 rounded-full ${isApiConnected ? 'bg-emerald-500' : 'bg-amber-400'}`} />
-          <span>
-            Market API Status: <strong>{isApiConnected ? 'Connected (Live Indian Feed)' : 'Manual Entry Mode (Offline)'}</strong>
-          </span>
-        </div>
-        <button
-          onClick={() => setIsApiConnected(!isApiConnected)}
-          className="font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
-        >
-          {isApiConnected ? 'Switch to Manual Entry' : 'Connect Market API (Optional)'}
-        </button>
-      </div>
+      {/* Grid of Open Stocks for Fast Price Entry */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {openTrades.map((t) => {
+          const cmp =
+            manualPrices[t.id] !== undefined
+              ? manualPrices[t.id]
+              : (t.currentMarketPrice || t.buyPrice);
+          const diff = cmp - t.buyPrice;
+          const diffPct = (diff / t.buyPrice) * 100;
+          const unrealized = (cmp - t.buyPrice) * t.quantity - (t.brokerage + t.taxesAndCharges);
 
-      {isApiConnected && (
-        <div className="rounded-xl border border-indigo-200 bg-indigo-50/50 p-3 text-xs text-indigo-800 dark:border-indigo-900/60 dark:bg-indigo-950/20 dark:text-indigo-300">
-          <div className="font-semibold mb-1">Live Feed Integration (Zerodha Kite / AlphaVantage / Yahoo Finance)</div>
-          <div className="flex gap-2">
-            <input
-              type="password"
-              placeholder="Enter Market Data API Key (optional)"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              className="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs dark:border-slate-700 dark:bg-slate-800"
-            />
-            <button
-              onClick={() => alert('API credentials saved locally!')}
-              className="rounded-lg bg-indigo-600 px-3 py-1 font-semibold text-white hover:bg-indigo-500"
+          return (
+            <div
+              key={t.id}
+              className="rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 dark:border-zinc-800 dark:bg-zinc-900/50"
             >
-              Save Key
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-sm text-zinc-900 dark:text-zinc-100">
+                    {t.symbol}
+                  </div>
+                  <div className="text-[10px] text-zinc-400 truncate max-w-[150px]">
+                    {t.assetName}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] uppercase font-semibold text-zinc-400">
+                    Qty: <span className="font-mono-num text-zinc-700 dark:text-zinc-300">{t.quantity}</span>
+                  </div>
+                  <div className="font-mono-num text-[11px] text-zinc-500">
+                    Entry: {formatINR(t.buyPrice)}
+                  </div>
+                </div>
+              </div>
 
-      {/* Open positions quick price editor table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead className="bg-slate-50 text-slate-500 dark:bg-slate-800/60 dark:text-slate-400 font-semibold uppercase">
-            <tr>
-              <th className="px-4 py-2.5">Symbol</th>
-              <th className="px-4 py-2.5">Buy Price</th>
-              <th className="px-4 py-2.5">Current CMP (₹)</th>
-              <th className="px-4 py-2.5">Unrealized P&L</th>
-              <th className="px-4 py-2.5">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {openTrades.map((t) => {
-              const currentVal = manualPrices[t.id] !== undefined ? manualPrices[t.id] : (t.currentMarketPrice || t.buyPrice);
-              const grossUnrealized = (currentVal - t.buyPrice) * t.quantity;
-              const netUnrealized = grossUnrealized - (t.brokerage + t.taxesAndCharges);
+              <div className="mt-3 flex items-center justify-between gap-3 border-t border-zinc-200/60 pt-2.5 dark:border-zinc-800">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-0.5">
+                    Live CMP (₹)
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={cmp}
+                    onChange={(e) => handleManualPriceChange(t.id, Number(e.target.value))}
+                    className="w-full rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-mono-num font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
 
-              return (
-                <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                  <td className="px-4 py-2.5 font-bold text-slate-800 dark:text-slate-200">
-                    {t.symbol} <span className="text-[10px] font-normal text-slate-400">({t.quantity} Qty)</span>
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">
-                    {formatINR(t.buyPrice)}
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <input
-                      type="number"
-                      step="any"
-                      value={manualPrices[t.id] !== undefined ? manualPrices[t.id] : (t.currentMarketPrice || t.buyPrice)}
-                      onChange={(e) => handleManualPriceChange(t.id, parseFloat(e.target.value) || 0)}
-                      className="w-28 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-900 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-                    />
-                  </td>
-                  <td className={`px-4 py-2.5 font-bold ${netUnrealized >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {netUnrealized >= 0 ? '+' : ''}{formatINR(netUnrealized)}
-                  </td>
-                  <td className="px-4 py-2.5 text-slate-400">
-                    <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                      Open Position
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex justify-end pt-2">
-        <button
-          onClick={saveManualPrices}
-          className="flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
-        >
-          <Edit3 className="h-3.5 w-3.5" />
-          Apply Updated Market Prices
-        </button>
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] uppercase font-bold text-zinc-400">
+                    Unrealized P&L
+                  </div>
+                  <div
+                    className={`font-mono-num text-xs font-bold ${
+                      unrealized >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                    }`}
+                  >
+                    {unrealized >= 0 ? '+' : ''}
+                    {formatINR(unrealized)}
+                  </div>
+                  <div
+                    className={`font-mono-num text-[10px] font-semibold ${
+                      diffPct >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                    }`}
+                  >
+                    {diffPct >= 0 ? '+' : ''}
+                    {diffPct.toFixed(2)}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

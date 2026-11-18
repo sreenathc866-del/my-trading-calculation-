@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Trade } from '../types/trading';
 import { calculateTradeMetrics, formatINR, formatPercent } from '../utils/calculations';
-import { Search, Filter, Edit2, Trash2, ArrowUpDown, ChevronDown, CheckCircle2, Clock } from 'lucide-react';
+import { Search, Filter, Edit2, Trash2, ArrowUpDown, ChevronDown, CheckCircle2, Clock, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 
 interface TradeLedgerProps {
   trades: Trade[];
@@ -50,17 +50,17 @@ export const TradeLedger: React.FC<TradeLedgerProps> = ({ trades, onEdit, onDele
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Search and Filters Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+      <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-[#111726]">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
           <input
             type="text"
-            placeholder="Search by Symbol (e.g. INFY), Name, or Notes..."
+            placeholder="Search symbol (e.g. RELIANCE, INFY), script or notes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100"
+            className="w-full rounded-lg border border-zinc-200 bg-zinc-50 pl-8.5 pr-3 py-1.5 text-xs text-zinc-900 placeholder-zinc-400 focus:border-zinc-400 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder-zinc-500"
           />
         </div>
 
@@ -69,7 +69,7 @@ export const TradeLedger: React.FC<TradeLedgerProps> = ({ trades, onEdit, onDele
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
           >
             <option value="All">All Statuses</option>
             <option value="Closed">Closed</option>
@@ -82,7 +82,7 @@ export const TradeLedger: React.FC<TradeLedgerProps> = ({ trades, onEdit, onDele
           <select
             value={platformFilter}
             onChange={(e) => setPlatformFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
           >
             <option value="All">All Platforms</option>
             <option value="Groww">Groww</option>
@@ -97,174 +97,201 @@ export const TradeLedger: React.FC<TradeLedgerProps> = ({ trades, onEdit, onDele
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            className="rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
           >
             <option value="All">All Types</option>
             <option value="Intraday">Intraday</option>
-            <option value="Delivery">Delivery</option>
-            <option value="F&O">F&O</option>
-            <option value="ETF">ETF</option>
-            <option value="IPO">IPO</option>
-            <option value="Commodity">Commodity</option>
+            <option value="Delivery">Delivery / Swing</option>
+            <option value="Futures">Futures</option>
+            <option value="Options">Options</option>
           </select>
+
+          {/* Sorting */}
+          <div className="flex items-center gap-1 border-l border-zinc-200 pl-2 dark:border-zinc-800">
+            <button
+              onClick={() => {
+                if (sortField === 'date') setSortAsc(!sortAsc);
+                else {
+                  setSortField('date');
+                  setSortAsc(false);
+                }
+              }}
+              className={`rounded-lg px-2 py-1 text-xs font-medium cursor-pointer ${
+                sortField === 'date'
+                  ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'
+              }`}
+            >
+              Date {sortField === 'date' && (sortAsc ? '↑' : '↓')}
+            </button>
+            <button
+              onClick={() => {
+                if (sortField === 'pnl') setSortAsc(!sortAsc);
+                else {
+                  setSortField('pnl');
+                  setSortAsc(false);
+                }
+              }}
+              className={`rounded-lg px-2 py-1 text-xs font-medium cursor-pointer ${
+                sortField === 'pnl'
+                  ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-white'
+                  : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'
+              }`}
+            >
+              P&L {sortField === 'pnl' && (sortAsc ? '↑' : '↓')}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Trades Ledger Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      {/* Trades Table */}
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-xs dark:border-zinc-800 dark:bg-[#111726]">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
-              <tr>
-                <th
-                  onClick={() => {
-                    if (sortField === 'date') setSortAsc(!sortAsc);
-                    else { setSortField('date'); setSortAsc(false); }
-                  }}
-                  className="px-4 py-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                >
-                  <div className="flex items-center gap-1">
-                    Date
-                    <ArrowUpDown className="h-3 w-3" />
-                  </div>
-                </th>
-                <th className="px-4 py-3">Symbol / Asset</th>
-                <th className="px-4 py-3">Platform</th>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Buy Price</th>
-                <th className="px-4 py-3">Sell / CMP</th>
-                <th className="px-4 py-3">Qty</th>
-                <th className="px-4 py-3">Total Invested</th>
-                <th className="px-4 py-3">Charges</th>
-                <th
-                  onClick={() => {
-                    if (sortField === 'pnl') setSortAsc(!sortAsc);
-                    else { setSortField('pnl'); setSortAsc(false); }
-                  }}
-                  className="px-4 py-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                >
-                  <div className="flex items-center gap-1">
-                    Net P&L (₹)
-                    <ArrowUpDown className="h-3 w-3" />
-                  </div>
-                </th>
-                <th
-                  onClick={() => {
-                    if (sortField === 'return') setSortAsc(!sortAsc);
-                    else { setSortField('return'); setSortAsc(false); }
-                  }}
-                  className="px-4 py-3 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100"
-                >
-                  <div className="flex items-center gap-1">
-                    Return %
-                    <ArrowUpDown className="h-3 w-3" />
-                  </div>
-                </th>
-                <th className="px-4 py-3 text-right">Actions</th>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-zinc-200 bg-zinc-50 text-[11px] font-semibold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
+                <th className="py-2.5 px-3">Date</th>
+                <th className="py-2.5 px-3">Instrument</th>
+                <th className="py-2.5 px-3">Type / Platform</th>
+                <th className="py-2.5 px-3 text-right">Qty</th>
+                <th className="py-2.5 px-3 text-right">Entry</th>
+                <th className="py-2.5 px-3 text-right">Exit / CMP</th>
+                <th className="py-2.5 px-3 text-right">Invested</th>
+                <th className="py-2.5 px-3 text-right">Charges</th>
+                <th className="py-2.5 px-3 text-right">Net P&L</th>
+                <th className="py-2.5 px-3 text-center">Status</th>
+                <th className="py-2.5 px-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
               {sortedTrades.length === 0 ? (
                 <tr>
-                  <td colSpan={13} className="px-4 py-8 text-center text-slate-400">
-                    No trading records match your filters.
+                  <td colSpan={11} className="py-12 text-center text-zinc-400">
+                    No matching trades found in ledger.
                   </td>
                 </tr>
               ) : (
-                sortedTrades.map((t) => {
-                  const m = calculateTradeMetrics(t);
-                  const isProfit = t.status === 'Open' ? m.unrealizedPnL >= 0 : m.netPnL >= 0;
+                sortedTrades.map((trade) => {
+                  const m = calculateTradeMetrics(trade);
+                  const isOpen = trade.status === 'Open';
+                  const pnl = isOpen ? m.unrealizedPnL : m.netPnL;
+                  const isProfitable = pnl >= 0;
 
                   return (
                     <tr
-                      key={t.id}
-                      className="hover:bg-slate-50/70 transition-colors dark:hover:bg-slate-800/40"
+                      key={trade.id}
+                      className="hover:bg-zinc-50/80 transition-colors dark:hover:bg-zinc-900/40"
                     >
-                      <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                        {t.date}
+                      {/* Date */}
+                      <td className="py-2.5 px-3 font-mono-num text-zinc-600 dark:text-zinc-400 whitespace-nowrap">
+                        {trade.date}
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="font-bold text-slate-900 dark:text-slate-100">
-                          {t.symbol}
+
+                      {/* Instrument */}
+                      <td className="py-2.5 px-3">
+                        <div className="font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                          <span>{trade.symbol}</span>
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate max-w-[120px]">
-                          {t.assetName || t.symbol}
+                        <div className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate max-w-[130px]">
+                          {trade.assetName}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
-                        {t.platform}
+
+                      {/* Type & Platform */}
+                      <td className="py-2.5 px-3">
+                        <div className="font-medium text-zinc-700 dark:text-zinc-300">
+                          {trade.tradeType}
+                        </div>
+                        <div className="text-[10px] text-zinc-400 dark:text-zinc-500">
+                          {trade.platform}
+                        </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                          {t.tradeType}
-                        </span>
+
+                      {/* Qty */}
+                      <td className="py-2.5 px-3 text-right font-mono-num font-semibold text-zinc-800 dark:text-zinc-200">
+                        {trade.quantity}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            t.status === 'Closed'
-                              ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                              : t.status === 'Open'
-                              ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
-                              : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
-                          }`}
-                        >
-                          {t.status}
-                        </span>
+
+                      {/* Buy Price */}
+                      <td className="py-2.5 px-3 text-right font-mono-num text-zinc-700 dark:text-zinc-300">
+                        {formatINR(trade.buyPrice)}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-700 dark:text-slate-300">
-                        {formatINR(t.buyPrice)}
-                      </td>
-                      <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                        {t.status === 'Open' ? (
-                          <span className="font-semibold text-amber-600 dark:text-amber-400">
-                            {formatINR(t.currentMarketPrice || t.buyPrice)} (CMP)
+
+                      {/* Exit / CMP */}
+                      <td className="py-2.5 px-3 text-right font-mono-num">
+                        {isOpen ? (
+                          <span className="text-amber-500 font-medium">
+                            {formatINR(trade.currentMarketPrice || trade.buyPrice)}
                           </span>
                         ) : (
-                          formatINR(t.sellPrice || 0)
+                          <span className="text-zinc-700 dark:text-zinc-300">
+                            {formatINR(trade.sellPrice)}
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">
-                        {t.quantity}
-                      </td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+
+                      {/* Total Invested */}
+                      <td className="py-2.5 px-3 text-right font-mono-num text-zinc-600 dark:text-zinc-400">
                         {formatINR(m.totalPurchaseAmount)}
                       </td>
-                      <td className="px-4 py-3 text-slate-500">
+
+                      {/* Charges */}
+                      <td className="py-2.5 px-3 text-right font-mono-num text-zinc-400 dark:text-zinc-500">
                         {formatINR(m.totalCharges)}
                       </td>
-                      <td className={`px-4 py-3 font-bold whitespace-nowrap ${
-                        isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                      }`}>
-                        {t.status === 'Open' ? (
-                          <span>{m.unrealizedPnL >= 0 ? '+' : ''}{formatINR(m.unrealizedPnL)} (Unrealized)</span>
-                        ) : (
-                          <span>{m.netPnL >= 0 ? '+' : ''}{formatINR(m.netPnL)}</span>
-                        )}
+
+                      {/* Net PnL */}
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                        <div
+                          className={`font-mono-num font-bold ${
+                            isProfitable ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                          }`}
+                        >
+                          {isProfitable ? '+' : ''}
+                          {formatINR(pnl)}
+                        </div>
+                        <div
+                          className={`font-mono-num text-[10px] font-semibold ${
+                            m.returnPercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                          }`}
+                        >
+                          {formatPercent(m.returnPercentage)}
+                        </div>
                       </td>
-                      <td className={`px-4 py-3 font-semibold whitespace-nowrap ${
-                        m.returnPercentage >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                      }`}>
-                        {formatPercent(m.returnPercentage)}
+
+                      {/* Status */}
+                      <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${
+                            trade.status === 'Closed'
+                              ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300'
+                              : trade.status === 'Open'
+                              ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 border border-amber-300/40'
+                              : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
+                          }`}
+                        >
+                          {trade.status}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
+
+                      {/* Actions */}
+                      <td className="py-2.5 px-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1">
                           <button
-                            onClick={() => onEdit(t)}
-                            className="rounded-lg p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40"
-                            title="Edit trade"
+                            onClick={() => onEdit(trade)}
+                            className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
+                            title="Edit Trade"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
                             onClick={() => {
-                              if (window.confirm(`Delete trade for ${t.symbol}?`)) {
-                                onDelete(t.id);
+                              if (window.confirm(`Delete trade record for ${trade.symbol}?`)) {
+                                onDelete(trade.id);
                               }
                             }}
-                            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40"
-                            title="Delete trade"
+                            className="rounded p-1 text-zinc-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 cursor-pointer"
+                            title="Delete Trade"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>

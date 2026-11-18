@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Trade, TradingPlatform, TradeType, TradeStatus } from '../types/trading';
 import { calculateTradeMetrics, formatINR } from '../utils/calculations';
-import { PlusCircle, Save, X, Calculator, IndianRupee } from 'lucide-react';
+import { Plus, X, Calculator, ShieldCheck } from 'lucide-react';
 
 interface TradeEntryModalProps {
   isOpen: boolean;
@@ -56,7 +56,6 @@ export const TradeEntryModal: React.FC<TradeEntryModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Real-time preview calculation
   const previewTrade: Trade = {
     id: formData.id || 'preview',
     date: formData.date || '',
@@ -80,24 +79,24 @@ export const TradeEntryModal: React.FC<TradeEntryModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.symbol || !formData.buyPrice || !formData.quantity) {
-      alert('Please fill in Symbol, Buy Price, and Quantity');
+    if (!formData.symbol || !formData.date || !formData.buyPrice || !formData.quantity) {
+      alert('Please fill all mandatory trade attributes (Symbol, Date, Buy Price, Quantity).');
       return;
     }
 
     const tradeToSave: Trade = {
-      id: initialTrade ? initialTrade.id : 'tr_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-      date: formData.date || new Date().toISOString().slice(0, 10),
+      id: initialTrade ? initialTrade.id : 'tr_' + Date.now(),
+      date: formData.date,
       assetName: formData.assetName || formData.symbol.toUpperCase(),
-      symbol: (formData.symbol || '').toUpperCase().trim(),
+      symbol: formData.symbol.toUpperCase().trim(),
       platform: formData.platform as TradingPlatform,
       tradeType: formData.tradeType as TradeType,
       buyPrice: Number(formData.buyPrice),
-      sellPrice: Number(formData.sellPrice) || 0,
-      currentMarketPrice: Number(formData.currentMarketPrice) || undefined,
+      sellPrice: Number(formData.sellPrice || 0),
+      currentMarketPrice: Number(formData.currentMarketPrice || formData.buyPrice),
       quantity: Number(formData.quantity),
-      brokerage: Number(formData.brokerage) || 0,
-      taxesAndCharges: Number(formData.taxesAndCharges) || 0,
+      brokerage: Number(formData.brokerage || 0),
+      taxesAndCharges: Number(formData.taxesAndCharges || 0),
       status: formData.status as TradeStatus,
       notes: formData.notes || '',
       createdAt: initialTrade ? initialTrade.createdAt : Date.now(),
@@ -110,312 +109,269 @@ export const TradeEntryModal: React.FC<TradeEntryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 my-8">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <PlusCircle className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              {initialTrade ? 'Edit Trade Record' : 'Record Daily Trade'}
+      <div className="w-full max-w-2xl rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-[#111726]">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3.5 dark:border-zinc-800">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-900 dark:text-white">
+              {initialTrade ? 'Modify Trade Record' : 'Record Trade Execution'}
             </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Precise entry calculation with brokerage & regulatory friction
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Symbol */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Date (IST)
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Trading Symbol *
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. RELIANCE, NIFTY24DEC"
+                value={formData.symbol}
+                onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-mono-num font-semibold focus:border-zinc-400 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+
+            {/* Asset / Company Name */}
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Instrument Description
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Reliance Industries Ltd"
+                value={formData.assetName}
+                onChange={(e) => setFormData({ ...formData, assetName: e.target.value })}
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 focus:border-zinc-400 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Execution Date *
               </label>
               <input
                 type="date"
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-mono-num focus:border-zinc-400 focus:bg-white dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               />
             </div>
 
+            {/* Platform */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Stock Symbol *
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. RELIANCE, NIFTY24OCT..."
-                value={formData.symbol}
-                onChange={(e) => setFormData({ ...formData, symbol: e.target.value.toUpperCase() })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 uppercase focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Asset Name
-              </label>
-              <input
-                type="text"
-                placeholder="e.g. Reliance Industries"
-                value={formData.assetName}
-                onChange={(e) => setFormData({ ...formData, assetName: e.target.value })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Platform
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Trading Platform
               </label>
               <select
                 value={formData.platform}
                 onChange={(e) => setFormData({ ...formData, platform: e.target.value as TradingPlatform })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-medium dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               >
                 <option value="Groww">Groww</option>
                 <option value="Zerodha">Zerodha</option>
                 <option value="AngelOne">Angel One</option>
                 <option value="Upstox">Upstox</option>
                 <option value="Dhan">Dhan</option>
-                <option value="Other">Other</option>
+                <option value="Other">Other Broker</option>
               </select>
             </div>
 
+            {/* Trade Type */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Trading Type
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Order Type
               </label>
               <select
                 value={formData.tradeType}
                 onChange={(e) => setFormData({ ...formData, tradeType: e.target.value as TradeType })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-medium dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               >
-                <option value="Intraday">Intraday</option>
-                <option value="Delivery">Delivery (Equity)</option>
-                <option value="F&O">F&O (Options/Futures)</option>
-                <option value="ETF">ETF</option>
-                <option value="IPO">IPO</option>
-                <option value="Commodity">Commodity</option>
-                <option value="Other">Other</option>
+                <option value="Intraday">Intraday (MIS)</option>
+                <option value="Delivery">Delivery / Swing (CNC)</option>
+                <option value="Futures">Futures (NRML)</option>
+                <option value="Options">Options</option>
               </select>
             </div>
 
+            {/* Status */}
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Trade Status
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Position Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as TradeStatus })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-medium dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               >
-                <option value="Closed">Closed (Completed)</option>
-                <option value="Open">Open (Holding / Unrealized)</option>
+                <option value="Closed">Closed Position</option>
+                <option value="Open">Open (Holding / Unsold)</option>
                 <option value="Partially Sold">Partially Sold</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800/80">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Quantity *
+              </label>
+              <input
+                type="number"
+                min="1"
+                required
+                value={formData.quantity || ''}
+                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-mono-num font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
                 Buy Price (₹) *
               </label>
               <input
                 type="number"
                 step="any"
                 required
-                min="0.01"
-                placeholder="1000"
                 value={formData.buyPrice || ''}
-                onChange={(e) => setFormData({ ...formData, buyPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                onChange={(e) => setFormData({ ...formData, buyPrice: Number(e.target.value) })}
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-mono-num font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               />
             </div>
 
             {formData.status === 'Open' ? (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  Current Market Price / CMP (₹)
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-1">
+                  Current Market (₹)
                 </label>
                 <input
                   type="number"
                   step="any"
-                  placeholder="Leave empty or set CMP"
                   value={formData.currentMarketPrice || ''}
-                  onChange={(e) => setFormData({ ...formData, currentMarketPrice: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-xl border border-amber-300 bg-amber-50/40 px-3 py-2 text-sm text-slate-800 focus:border-amber-500 focus:outline-hidden dark:border-amber-700/60 dark:bg-amber-950/20 dark:text-slate-100"
+                  onChange={(e) => setFormData({ ...formData, currentMarketPrice: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-amber-300 bg-amber-500/5 px-3 py-1.5 text-xs text-zinc-900 font-mono-num font-semibold dark:border-amber-500/30 dark:text-amber-300"
                 />
               </div>
             ) : (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
                   Sell Price (₹)
                 </label>
                 <input
                   type="number"
                   step="any"
-                  placeholder="1100"
                   value={formData.sellPrice || ''}
-                  onChange={(e) => setFormData({ ...formData, sellPrice: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                  onChange={(e) => setFormData({ ...formData, sellPrice: Number(e.target.value) })}
+                  className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-mono-num font-semibold dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
                 />
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Quantity *
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+                Brokerage (₹)
               </label>
               <input
                 type="number"
                 step="any"
-                required
-                min="0.001"
-                placeholder="10"
-                value={formData.quantity || ''}
-                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+                value={formData.brokerage !== undefined ? formData.brokerage : 20}
+                onChange={(e) => setFormData({ ...formData, brokerage: Number(e.target.value) })}
+                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 font-mono-num dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Brokerage Charges (₹)
-              </label>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                placeholder="20"
-                value={formData.brokerage ?? 0}
-                onChange={(e) => setFormData({ ...formData, brokerage: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                Taxes & Other Charges (₹)
-                <span className="text-[10px] text-slate-400 block font-normal">STT, GST, Stamp Duty, SEBI</span>
-              </label>
-              <input
-                type="number"
-                step="any"
-                min="0"
-                placeholder="10"
-                value={formData.taxesAndCharges ?? 0}
-                onChange={(e) => setFormData({ ...formData, taxesAndCharges: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
-              />
-            </div>
-          </div>
-
+          {/* Notes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-              Notes / Strategy / Learnings
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
+              Rationale / Strategy Notes
             </label>
             <input
               type="text"
-              placeholder="e.g. Breakout retest at 20 EMA, trailed stop loss..."
-              value={formData.notes || ''}
+              placeholder="e.g. 5-min EMA crossover, trailing stop 2% below breakout bar"
+              value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-indigo-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
             />
           </div>
 
-          {/* Automatic Calculation Preview Box */}
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/60">
-            <div className="flex items-center gap-2 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              <Calculator className="h-4 w-4" />
-              Live Trade Math Preview
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-4 text-xs">
+          {/* Real-time Math Preview Ribbon */}
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/50">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block">Purchase Amount:</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-[10px] uppercase font-bold text-zinc-400">Total Purchase:</span>
+                <div className="font-mono-num font-semibold text-zinc-800 dark:text-zinc-200">
                   {formatINR(metrics.totalPurchaseAmount)}
-                </span>
+                </div>
               </div>
+
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block">
-                  {formData.status === 'Open' ? 'Current Valuation:' : 'Selling Amount:'}
-                </span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
-                  {formData.status === 'Open'
-                    ? formatINR((Number(formData.currentMarketPrice) || Number(formData.buyPrice)) * Number(formData.quantity))
-                    : formatINR(metrics.totalSellingAmount)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">Total Charges:</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                <span className="text-[10px] uppercase font-bold text-zinc-400">Total Charges:</span>
+                <div className="font-mono-num font-semibold text-zinc-800 dark:text-zinc-200">
                   {formatINR(metrics.totalCharges)}
-                </span>
+                </div>
               </div>
+
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block">
-                  {formData.status === 'Open' ? 'Gross Unrealized:' : 'Gross P&L:'}
+                <span className="text-[10px] uppercase font-bold text-zinc-400">
+                  {formData.status === 'Open' ? 'Unrealized P&L:' : 'Net Realized P&L:'}
                 </span>
-                <span className={`font-semibold ${
-                  (formData.status === 'Open' ? metrics.unrealizedPnL + metrics.totalCharges : metrics.grossPnL) >= 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}>
-                  {formatINR(formData.status === 'Open' ? metrics.unrealizedPnL + metrics.totalCharges : metrics.grossPnL)}
-                </span>
-              </div>
-              <div>
-                <span className="text-slate-500 dark:text-slate-400 block">
-                  {formData.status === 'Open' ? 'Net Unrealized P&L:' : 'Net Realized P&L:'}
-                </span>
-                <span className={`font-bold text-sm ${
-                  (formData.status === 'Open' ? metrics.unrealizedPnL : metrics.netPnL) >= 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}>
+                <div
+                  className={`font-mono-num font-bold ${
+                    (formData.status === 'Open' ? metrics.unrealizedPnL : metrics.netPnL) >= 0
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
                   {formatINR(formData.status === 'Open' ? metrics.unrealizedPnL : metrics.netPnL)}
-                </span>
+                </div>
               </div>
+
               <div>
-                <span className="text-slate-500 dark:text-slate-400 block">Return %:</span>
-                <span className={`font-bold text-sm ${
-                  metrics.returnPercentage >= 0
-                    ? 'text-emerald-600 dark:text-emerald-400'
-                    : 'text-rose-600 dark:text-rose-400'
-                }`}>
-                  {metrics.returnPercentage > 0 ? '+' : ''}
+                <span className="text-[10px] uppercase font-bold text-zinc-400">Return %:</span>
+                <div
+                  className={`font-mono-num font-bold ${
+                    metrics.returnPercentage >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
                   {metrics.returnPercentage.toFixed(2)}%
-                </span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-3">
+          {/* Action Footer */}
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-100 dark:border-zinc-800">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-md hover:bg-indigo-500 transition-colors"
+              className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 text-xs font-semibold shadow-xs cursor-pointer"
             >
-              <Save className="h-4 w-4" />
-              {initialTrade ? 'Update Trade' : 'Add Trade'}
+              {initialTrade ? 'Save Changes' : 'Record Trade'}
             </button>
           </div>
         </form>

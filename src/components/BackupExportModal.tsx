@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { Trade, CapitalTransaction } from '../types/trading';
 import { exportTradesToCSV, exportTradesToExcel, exportReportToPDF } from '../utils/exportUtils';
 import { exportDatabaseBackup, restoreDatabaseBackup, clearAllLocalData } from '../services/storageService';
-import { Download, Upload, FileSpreadsheet, FileText, Database, AlertTriangle, CheckCircle, Trash2 } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, FileText, Database, Trash2, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { formatINR } from '../utils/calculations';
 
 interface BackupExportModalProps {
@@ -31,12 +31,12 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Trading_Journal_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `Tradelytics_Pro_Backup_${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setStatusMsg({ type: 'success', text: 'Complete JSON backup downloaded safely!' });
+      setStatusMsg({ type: 'success', text: 'Full JSON database backup downloaded successfully.' });
     } catch (err: any) {
       setStatusMsg({ type: 'error', text: 'Backup failed: ' + err.message });
     }
@@ -53,7 +53,7 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
         const res = await restoreDatabaseBackup(text);
         setStatusMsg({
           type: 'success',
-          text: `Successfully restored ${res.tradeCount} trades and ${res.capitalCount} capital entries!`,
+          text: `Restored ${res.tradeCount} trades and ${res.capitalCount} capital records successfully!`,
         });
         onDataChanged();
       } catch (err: any) {
@@ -64,10 +64,14 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
   };
 
   const handleClearAll = async () => {
-    if (window.confirm('Are you sure you want to delete all trades and capital records permanently? Make sure to download a backup first!')) {
+    if (
+      window.confirm(
+        'Warning: This permanently erases all locally stored trades and capital records. Download a JSON backup first. Proceed?'
+      )
+    ) {
       await clearAllLocalData();
       onDataChanged();
-      setStatusMsg({ type: 'success', text: 'All local records cleared.' });
+      setStatusMsg({ type: 'success', text: 'All local database records wiped.' });
     }
   };
 
@@ -81,112 +85,116 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
       const p = (t.sellPrice - t.buyPrice) * t.quantity - (t.brokerage + t.taxesAndCharges);
       return p < 0 ? acc + Math.abs(p) : acc;
     }, 0);
+    const netPnL = totalProfit - totalLoss;
+    const winRate =
+      closed.length > 0
+        ? (closed.filter((t) => (t.sellPrice - t.buyPrice) * t.quantity - (t.brokerage + t.taxesAndCharges) > 0).length /
+            closed.length) *
+          100
+        : 0;
 
     exportReportToPDF(
-      'Trading Performance Statement',
-      `Full Ledger (${trades.length} Trades)`,
+      'Trading Portfolio & Execution Audit Report',
+      'Full History Report',
       [
         { label: 'Total Trades', value: trades.length.toString() },
         { label: 'Realized Profit', value: formatINR(totalProfit) },
         { label: 'Realized Loss', value: formatINR(totalLoss) },
-        { label: 'Net Realized P&L', value: formatINR(totalProfit - totalLoss) },
+        { label: 'Net Realized P&L', value: formatINR(netPnL) },
+        { label: 'Win Rate', value: `${winRate.toFixed(1)}%` },
       ],
       trades
     );
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Database className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
-            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              Backup, Restore & Exports
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto">
+      <div className="w-full max-w-xl rounded-xl border border-zinc-200 bg-white shadow-xl dark:border-zinc-800 dark:bg-[#111726]">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-200 px-5 py-3.5 dark:border-zinc-800">
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-900 dark:text-white">
+              Data Management & Reports
             </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Export institutional PDF audits, Excel ledgers, or create offline JSON backups
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {statusMsg && (
-          <div
-            className={`mt-4 flex items-center gap-2 rounded-lg p-3 text-sm ${
-              statusMsg.type === 'success'
-                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300'
-                : 'bg-rose-50 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300'
-            }`}
-          >
-            {statusMsg.type === 'success' ? (
-              <CheckCircle className="h-5 w-5 shrink-0" />
-            ) : (
-              <AlertTriangle className="h-5 w-5 shrink-0" />
-            )}
-            <span>{statusMsg.text}</span>
-          </div>
-        )}
+        <div className="p-5 space-y-4">
+          {statusMsg && (
+            <div
+              className={`flex items-center gap-2 rounded-lg p-2.5 text-xs font-medium ${
+                statusMsg.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                  : 'bg-rose-50 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
+              }`}
+            >
+              {statusMsg.type === 'success' ? (
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+              ) : (
+                <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
+              )}
+              <span>{statusMsg.text}</span>
+            </div>
+          )}
 
-        <div className="mt-6 space-y-6">
-          {/* Export section */}
+          {/* Export Formats */}
           <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-              Export Trading Reports
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+              Export Audit Reports
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <button
-                onClick={() => exportTradesToCSV(trades)}
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 p-4 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-800 dark:hover:bg-indigo-950/30 text-slate-700 dark:text-slate-200"
+                onClick={handlePDFExport}
+                className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-850 cursor-pointer"
               >
-                <FileText className="h-6 w-6 text-emerald-500" />
-                <span className="text-sm font-medium">Export CSV</span>
-                <span className="text-xs text-slate-400">Plain text data</span>
+                <FileText className="h-4 w-4 text-rose-500" />
+                <span>PDF Audit Report</span>
               </button>
 
               <button
                 onClick={() => exportTradesToExcel(trades, capital)}
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 p-4 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-800 dark:hover:bg-indigo-950/30 text-slate-700 dark:text-slate-200"
+                className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-850 cursor-pointer"
               >
-                <FileSpreadsheet className="h-6 w-6 text-green-600" />
-                <span className="text-sm font-medium">Export Excel</span>
-                <span className="text-xs text-slate-400">Multi-sheet .xlsx</span>
+                <FileSpreadsheet className="h-4 w-4 text-emerald-500" />
+                <span>Excel Spreadsheet</span>
               </button>
 
               <button
-                onClick={handlePDFExport}
-                className="flex flex-col items-center justify-center gap-2 rounded-xl border border-slate-200 p-4 transition-all hover:border-indigo-400 hover:bg-indigo-50/50 dark:border-slate-800 dark:hover:bg-indigo-950/30 text-slate-700 dark:text-slate-200"
+                onClick={() => exportTradesToCSV(trades)}
+                className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-850 cursor-pointer"
               >
-                <Download className="h-6 w-6 text-rose-500" />
-                <span className="text-sm font-medium">Download PDF</span>
-                <span className="text-xs text-slate-400">Formatted Report</span>
+                <Download className="h-4 w-4 text-blue-500" />
+                <span>CSV Raw Ledger</span>
               </button>
             </div>
           </div>
 
-          {/* Backup & Restore section */}
-          <div className="border-t border-slate-100 pt-5 dark:border-slate-800">
-            <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-              Offline Data Backup & Restore
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-              All your records are stored in browser IndexedDB. Save a JSON backup file to prevent data loss if browser cache is cleared.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3">
+          {/* Backup & Restore */}
+          <div className="border-t border-zinc-100 pt-3 dark:border-zinc-800">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2">
+              Offline Database Archive & Restore
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <button
                 onClick={handleDownloadJSON}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-indigo-500"
+                className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-850 cursor-pointer"
               >
-                <Download className="h-4 w-4" />
-                Download JSON Backup
+                <Database className="h-4 w-4 text-emerald-500" />
+                <span>Download JSON Backup</span>
               </button>
 
-              <label className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800/60 dark:bg-indigo-950/50 dark:text-indigo-300 dark:hover:bg-indigo-900/60 cursor-pointer">
-                <Upload className="h-4 w-4" />
-                Restore from Backup
+              <label className="flex items-center justify-center gap-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-xs font-semibold text-zinc-800 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-850 cursor-pointer">
+                <Upload className="h-4 w-4 text-indigo-500" />
+                <span>Restore JSON Backup</span>
                 <input
                   type="file"
                   accept=".json"
@@ -197,18 +205,25 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
             </div>
           </div>
 
-          {/* Danger zone */}
-          <div className="border-t border-slate-100 pt-4 dark:border-slate-800 flex justify-between items-center">
-            <span className="text-xs text-slate-400">
-              {trades.length} trades | {capital.length} capital transactions saved
-            </span>
-            <button
-              onClick={handleClearAll}
-              className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              Reset All Local Data
-            </button>
+          {/* Danger Zone */}
+          <div className="border-t border-zinc-100 pt-3 dark:border-zinc-800">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                  Reset Local Storage
+                </span>
+                <p className="text-[11px] text-zinc-400">
+                  Wipe all trades and capital history from browser
+                </p>
+              </div>
+              <button
+                onClick={handleClearAll}
+                className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950 cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Wipe Database</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

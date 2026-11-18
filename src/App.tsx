@@ -27,20 +27,22 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
-  PlusCircle,
+  Plus,
   Database,
   Sun,
   Moon,
   BarChart3,
   BookOpen,
   PieChart,
-  DollarSign,
   Radio,
   ArrowUpRight,
   ArrowDownRight,
-  Layers,
   Sparkles,
+  Layers,
+  Activity,
   ShieldCheck,
+  Building2,
+  Percent,
 } from 'lucide-react';
 
 export function App() {
@@ -56,7 +58,7 @@ export function App() {
 
   // Dark mode
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('theme') === 'dark';
+    return localStorage.getItem('theme') !== 'light'; // Default to sleek terminal dark
   });
 
   useEffect(() => {
@@ -76,16 +78,15 @@ export function App() {
       const storedTrades = await getAllTrades();
       const storedCapital = await getAllCapitalTransactions();
 
-      // Seed initial dummy sample data if totally fresh for instant experience
       if (storedTrades.length === 0 && storedCapital.length === 0) {
         const todayStr = new Date().toISOString().slice(0, 10);
         const sampleCapital: CapitalTransaction = {
           id: 'cap_initial',
           date: todayStr,
           type: 'Initial',
-          amount: 150000,
+          amount: 250000,
           platform: 'Groww',
-          notes: 'Initial trading deposit',
+          notes: 'Primary trading allocation',
           createdAt: Date.now(),
         };
 
@@ -103,7 +104,7 @@ export function App() {
             brokerage: 20,
             taxesAndCharges: 18,
             status: 'Closed',
-            notes: 'Breakout above monthly pivot level',
+            notes: 'Breakout above monthly pivot level with surge in volume',
             createdAt: Date.now() - 3600000,
             updatedAt: Date.now(),
           },
@@ -120,7 +121,7 @@ export function App() {
             brokerage: 40,
             taxesAndCharges: 12,
             status: 'Closed',
-            notes: 'Intraday pullback stop triggered',
+            notes: 'Intraday pullback stop loss hit near VWAP',
             createdAt: Date.now() - 7200000,
             updatedAt: Date.now(),
           },
@@ -133,12 +134,12 @@ export function App() {
             tradeType: 'Delivery',
             buyPrice: 1860,
             sellPrice: 0,
-            currentMarketPrice: 1910,
-            quantity: 25,
+            currentMarketPrice: 1915,
+            quantity: 35,
             brokerage: 20,
             taxesAndCharges: 15,
             status: 'Open',
-            notes: 'Quarterly swing holding',
+            notes: 'Swing trade target 1980, trailing stop 1845',
             createdAt: Date.now() - 10000000,
             updatedAt: Date.now(),
           },
@@ -163,7 +164,6 @@ export function App() {
     loadData();
   }, []);
 
-  // Handlers for Trades
   const handleSaveTrade = async (trade: Trade) => {
     await saveTrade(trade);
     await loadData();
@@ -184,7 +184,6 @@ export function App() {
     setIsTradeModalOpen(true);
   };
 
-  // Handlers for Capital
   const handleAddCapital = async (tx: CapitalTransaction) => {
     await saveCapitalTransaction(tx);
     await loadData();
@@ -195,7 +194,6 @@ export function App() {
     await loadData();
   };
 
-  // Handlers for Market Price Updates
   const handleUpdateMarketPrices = async (updates: { id: string; currentMarketPrice: number }[]) => {
     for (const item of updates) {
       const target = trades.find((t) => t.id === item.id);
@@ -210,311 +208,412 @@ export function App() {
     await loadData();
   };
 
-  // Calculated Portfolio Summary
   const summary = calculateDashboardSummary(trades, capital);
   const openTrades = trades.filter((t) => t.status === 'Open');
+  const netPnLTotal = summary.netRealizedPnL + summary.currentUnrealizedPnL;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 transition-colors dark:bg-[#0f172a] dark:text-slate-100 pb-16">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md dark:border-slate-800/80 dark:bg-[#0f172a]/90">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-[#f8fafc] text-zinc-900 transition-colors dark:bg-[#0b0f17] dark:text-zinc-100 flex flex-col">
+      {/* Top Professional Ticker / Status Strip */}
+      <div className="border-b border-zinc-200/80 bg-zinc-100/90 px-4 py-1.5 text-[11px] font-medium text-zinc-600 dark:border-zinc-800/80 dark:bg-[#0e1420] dark:text-zinc-400">
+        <div className="mx-auto flex max-w-7xl items-center justify-between">
+          <div className="flex items-center gap-4 overflow-x-auto whitespace-nowrap">
+            <span className="flex items-center gap-1.5 font-semibold text-zinc-800 dark:text-zinc-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              TERMINAL LIVE
+            </span>
+            <span className="text-zinc-300 dark:text-zinc-700">|</span>
+            <span className="text-zinc-500 dark:text-zinc-400">
+              Total Capital:{' '}
+              <span className="font-mono-num font-semibold text-zinc-900 dark:text-zinc-200">
+                {formatINR(summary.totalTradingCapital)}
+              </span>
+            </span>
+            <span className="text-zinc-300 dark:text-zinc-700">|</span>
+            <span className="text-zinc-500 dark:text-zinc-400">
+              Cash Float:{' '}
+              <span className="font-mono-num font-semibold text-zinc-900 dark:text-zinc-200">
+                {formatINR(summary.availableCash)}
+              </span>
+            </span>
+            <span className="text-zinc-300 dark:text-zinc-700">|</span>
+            <span className="text-zinc-500 dark:text-zinc-400">
+              Active Positions:{' '}
+              <span className="font-mono-num font-semibold text-amber-500 dark:text-amber-400">
+                {openTrades.length}
+              </span>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <ShieldCheck className="h-3 w-3" /> Encrypted Local DB
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Top Header */}
+      <header className="sticky top-0 z-40 border-b border-zinc-200 bg-white/95 backdrop-blur-md dark:border-zinc-800 dark:bg-[#0f1726]/95">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white shadow-md shadow-indigo-500/20">
-              <TrendingUp className="h-6 w-6" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-950 text-emerald-400 border border-zinc-800 shadow-sm dark:bg-zinc-900">
+              <Activity className="h-5 w-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                  TRADELYTICS <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400">PRO</span>
-                </h1>
+                <span className="text-sm font-black tracking-tight uppercase text-zinc-900 dark:text-white">
+                  Tradelytics
+                </span>
+                <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-[9px] font-bold tracking-wider uppercase text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  Terminal 2.0
+                </span>
               </div>
-              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                Personal Trading & P&L Intelligence (100% Offline & Private)
-              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
             <button
               onClick={handleOpenAddTrade}
-              className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs sm:text-sm font-semibold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
             >
-              <PlusCircle className="h-4 w-4" />
-              <span>Add Trade</span>
+              <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+              <span>Record Trade</span>
             </button>
 
             <button
               onClick={() => setIsBackupModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
-              title="Backup, Restore & Exports"
+              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800/80 transition-colors cursor-pointer"
             >
-              <Database className="h-4 w-4 text-indigo-500" />
-              <span className="hidden sm:inline">Backup / Export</span>
+              <Database className="h-3.5 w-3.5 text-zinc-500" />
+              <span className="hidden sm:inline">Backup & Export</span>
             </button>
 
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+              className="rounded-lg border border-zinc-200 bg-white p-1.5 text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 cursor-pointer"
               title="Toggle Theme"
             >
-              {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-600" />}
+              {darkMode ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-zinc-600" />}
             </button>
           </div>
         </div>
 
-        {/* Navigation Tabs Bar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex overflow-x-auto space-x-1 sm:space-x-2 border-t border-slate-100 dark:border-slate-800/60 py-1.5">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-            { id: 'trades', label: `Trades (${trades.length})`, icon: BookOpen },
-            { id: 'analysis', label: 'Periodic Analysis', icon: PieChart },
-            { id: 'insights', label: 'Trading Insights', icon: Sparkles },
-            { id: 'capital', label: 'Capital Management', icon: Wallet },
-            { id: 'market', label: `Market Prices (${openTrades.length} Open)`, icon: Radio },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                  isActive
-                    ? 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
+        {/* Dense Financial Terminal Navigation Tabs */}
+        <div className="border-t border-zinc-200 dark:border-zinc-800/80">
+          <div className="mx-auto flex max-w-7xl space-x-1 px-4 sm:px-6 lg:px-8 overflow-x-auto">
+            {[
+              { id: 'dashboard', label: 'Command Center', icon: BarChart3 },
+              { id: 'trades', label: `Trades Ledger (${trades.length})`, icon: BookOpen },
+              { id: 'analysis', label: 'Periodic Analysis', icon: PieChart },
+              { id: 'insights', label: 'Edge & Performance Insights', icon: Sparkles },
+              { id: 'capital', label: 'Capital Ledger', icon: Wallet },
+              { id: 'market', label: `Live CMP Matrix (${openTrades.length})`, icon: Radio },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`flex items-center gap-2 border-b-2 px-3 py-2.5 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                    isActive
+                      ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5'
+                      : 'border-transparent text-zinc-600 hover:border-zinc-300 hover:text-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-200'
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        {/* ---------------- 1. DASHBOARD TAB ---------------- */}
+      {/* Main Content Area */}
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        {/* ---------------- 1. COMMAND CENTER (DASHBOARD) ---------------- */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
-            {/* Primary KPI Grid: Section 1 Dashboard Requirement */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {/* Total Trading Capital */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Trading Capital
-                </span>
-                <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
-                  {formatINR(summary.totalTradingCapital)}
+            {/* Primary Quantitative Metric Strip */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {/* Portfolio Net Worth */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="text-[10px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500">
+                  Portfolio Value
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                  <span>Available Cash:</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300">{formatINR(summary.availableCash)}</span>
-                </div>
-              </div>
-
-              {/* Current Portfolio Value */}
-              <div className="rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50/40 to-white p-5 shadow-xs dark:border-indigo-900/60 dark:from-slate-900 dark:to-indigo-950/20">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
-                    Current Portfolio Value
-                  </span>
-                  <Wallet className="h-4 w-4 text-indigo-500" />
-                </div>
-                <div className="mt-2 text-2xl font-black text-indigo-950 dark:text-indigo-200">
+                <div className="font-mono-num mt-1.5 text-xl font-bold tracking-tight text-zinc-950 dark:text-white">
                   {formatINR(summary.currentPortfolioValue)}
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                  <span>Total Investment:</span>
-                  <span className="font-semibold">{formatINR(summary.totalInvestment)}</span>
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span>Invested:</span>
+                  <span className="font-mono-num font-medium">{formatINR(summary.totalInvestment)}</span>
                 </div>
               </div>
 
-              {/* Overall Profit/Loss Percentage */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Overall P&L %
-                </span>
-                <div className={`mt-2 text-2xl font-black ${
-                  summary.overallPnLPercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'
-                }`}>
-                  {formatPercent(summary.overallPnLPercentage)}
+              {/* Total Net PnL */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="text-[10px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500">
+                  Cumulative P&L
                 </div>
-                <div className="mt-1 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                  <span>Net Capital Gains:</span>
-                  <span className={`font-semibold ${summary.netRealizedPnL + summary.currentUnrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {formatINR(summary.netRealizedPnL + summary.currentUnrealizedPnL)}
+                <div
+                  className={`font-mono-num mt-1.5 text-xl font-bold tracking-tight ${
+                    netPnLTotal >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {netPnLTotal >= 0 ? '+' : ''}
+                  {formatINR(netPnLTotal)}
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span>Return:</span>
+                  <span
+                    className={`font-mono-num font-semibold ${
+                      summary.overallPnLPercentage >= 0 ? 'text-emerald-500' : 'text-rose-500'
+                    }`}
+                  >
+                    {formatPercent(summary.overallPnLPercentage)}
                   </span>
                 </div>
               </div>
 
-              {/* Today's P&L */}
-              <div className={`rounded-2xl border p-5 shadow-xs ${
-                summary.todayPnL >= 0
-                  ? 'border-emerald-200 bg-emerald-50/30 dark:border-emerald-950/60 dark:bg-emerald-950/20'
-                  : 'border-rose-200 bg-rose-50/30 dark:border-rose-950/60 dark:bg-rose-950/20'
-              }`}>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    Today's Profit / Loss
-                  </span>
+              {/* Today's PnL */}
+              <div
+                className={`rounded-xl border p-4 ${
+                  summary.todayPnL >= 0
+                    ? 'border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20'
+                    : 'border-rose-200/80 bg-rose-50/40 dark:border-rose-900/40 dark:bg-rose-950/20'
+                }`}
+              >
+                <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-zinc-500 dark:text-zinc-400">
+                  <span>Today's Realized</span>
                   {summary.todayPnL >= 0 ? (
-                    <ArrowUpRight className="h-4 w-4 text-emerald-500" />
+                    <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
                   ) : (
-                    <ArrowDownRight className="h-4 w-4 text-rose-500" />
+                    <ArrowDownRight className="h-3.5 w-3.5 text-rose-500" />
                   )}
                 </div>
-                <div className={`mt-2 text-2xl font-black ${
-                  summary.todayPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                }`}>
-                  {summary.todayPnL >= 0 ? '+' : ''}{formatINR(summary.todayPnL)}
+                <div
+                  className={`font-mono-num mt-1.5 text-xl font-bold tracking-tight ${
+                    summary.todayPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {summary.todayPnL >= 0 ? '+' : ''}
+                  {formatINR(summary.todayPnL)}
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Daily Return: {formatPercent(summary.todayReturnPct)}
-                </p>
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span>Day Return:</span>
+                  <span className="font-mono-num font-medium">{formatPercent(summary.todayReturnPct)}</span>
+                </div>
               </div>
 
-              {/* This Week's P&L */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  This Week's P&L
-                </span>
-                <div className={`mt-2 text-2xl font-black ${
-                  summary.thisWeekPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
-                }`}>
-                  {summary.thisWeekPnL >= 0 ? '+' : ''}{formatINR(summary.thisWeekPnL)}
+              {/* Unrealized P&L */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="flex items-center justify-between text-[10px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500">
+                  <span>Open Holdings</span>
+                  <span className="font-mono-num font-semibold text-amber-500">{openTrades.length} POS</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">Monday to Sunday</p>
-              </div>
-
-              {/* This Month's P&L */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  This Month's P&L
-                </span>
-                <div className={`mt-2 text-2xl font-black ${
-                  summary.thisMonthPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
-                }`}>
-                  {summary.thisMonthPnL >= 0 ? '+' : ''}{formatINR(summary.thisMonthPnL)}
+                <div
+                  className={`font-mono-num mt-1.5 text-xl font-bold tracking-tight ${
+                    summary.currentUnrealizedPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  {summary.currentUnrealizedPnL >= 0 ? '+' : ''}
+                  {formatINR(summary.currentUnrealizedPnL)}
                 </div>
-                <p className="mt-1 text-xs text-slate-400">Current calendar month</p>
-              </div>
-
-              {/* Total Realized Profit */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Realized Profit
-                </span>
-                <div className="mt-2 text-2xl font-black text-emerald-500">
-                  +{formatINR(summary.totalRealizedProfit)}
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span>Est. Unrealized</span>
+                  <span className="text-[10px] uppercase font-semibold text-zinc-400">Live</span>
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Winning trades: {summary.winningTradesCount}
-                </p>
-              </div>
-
-              {/* Total Realized Loss */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Realized Loss
-                </span>
-                <div className="mt-2 text-2xl font-black text-rose-500">
-                  -{formatINR(summary.totalRealizedLoss)}
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Losing trades: {summary.losingTradesCount}
-                </p>
-              </div>
-
-              {/* Current Unrealized P&L */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Unrealized P&L
-                  </span>
-                  <span className="text-[10px] font-semibold text-amber-500">OPEN TRADES</span>
-                </div>
-                <div className={`mt-2 text-2xl font-black ${
-                  summary.currentUnrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'
-                }`}>
-                  {summary.currentUnrealizedPnL >= 0 ? '+' : ''}{formatINR(summary.currentUnrealizedPnL)}
-                </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  Active in {openTrades.length} holding positions
-                </p>
-              </div>
-
-              {/* Money Deposited */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Deposited
-                </span>
-                <div className="mt-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {formatINR(summary.totalDeposited)}
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Total funds injected</p>
-              </div>
-
-              {/* Money Withdrawn */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Total Withdrawn
-                </span>
-                <div className="mt-2 text-2xl font-bold text-slate-800 dark:text-slate-100">
-                  {formatINR(summary.totalWithdrawn)}
-                </div>
-                <p className="mt-1 text-xs text-slate-400">Funds withdrawn</p>
               </div>
 
               {/* Win Rate */}
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                  Win Rate %
-                </span>
-                <div className="mt-2 text-2xl font-black text-indigo-600 dark:text-indigo-400">
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="text-[10px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500">
+                  Win Rate Ratio
+                </div>
+                <div className="font-mono-num mt-1.5 text-xl font-bold tracking-tight text-blue-600 dark:text-blue-400">
                   {summary.winRate.toFixed(1)}%
                 </div>
-                <p className="mt-1 text-xs text-slate-400">
-                  {summary.winningTradesCount} wins out of {summary.closedTradesCount} closed
-                </p>
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span>Score:</span>
+                  <span className="font-mono-num font-medium">
+                    {summary.winningTradesCount}W / {summary.losingTradesCount}L
+                  </span>
+                </div>
+              </div>
+
+              {/* Capital Under Management */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="text-[10px] font-bold tracking-wider uppercase text-zinc-400 dark:text-zinc-500">
+                  Trading Capital
+                </div>
+                <div className="font-mono-num mt-1.5 text-xl font-bold tracking-tight text-zinc-950 dark:text-zinc-100">
+                  {formatINR(summary.totalTradingCapital)}
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span>Available:</span>
+                  <span className="font-mono-num font-medium text-emerald-600 dark:text-emerald-400">{formatINR(summary.availableCash)}</span>
+                </div>
               </div>
             </div>
 
-            {/* Quick Actions / Active Holding Banner */}
-            {openTrades.length > 0 && (
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-900/60 dark:bg-amber-950/20 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Radio className="h-5 w-5 text-amber-500 animate-pulse" />
-                  <div>
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      You have {openTrades.length} active Open holding position{openTrades.length > 1 ? 's' : ''}
+            {/* Performance High-level Balance Card */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              {/* Realized Gains Breakdown */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800/80">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Realized P&L Statistics
+                  </span>
+                  <span className="text-[11px] font-medium text-zinc-400">
+                    {summary.closedTradesCount} Closed Positions
+                  </span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 dark:text-zinc-400">Total Realized Profits</span>
+                    <span className="font-mono-num font-semibold text-emerald-600 dark:text-emerald-400">
+                      +{formatINR(summary.totalRealizedProfit)}
                     </span>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Unrealized P&L is tracked with current market prices without inflating realized profits.
-                    </p>
                   </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 dark:text-zinc-400">Total Realized Losses</span>
+                    <span className="font-mono-num font-semibold text-rose-600 dark:text-rose-400">
+                      -{formatINR(summary.totalRealizedLoss)}
+                    </span>
+                  </div>
+                  <div className="border-t border-zinc-100 pt-2.5 flex items-center justify-between text-xs font-semibold dark:border-zinc-800">
+                    <span className="text-zinc-700 dark:text-zinc-300">Net Realized Balance</span>
+                    <span
+                      className={`font-mono-num ${
+                        summary.netRealizedPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {summary.netRealizedPnL >= 0 ? '+' : ''}
+                      {formatINR(summary.netRealizedPnL)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeframe Horizons */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800/80">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Horizon Velocity
+                  </span>
+                  <span className="text-[11px] font-medium text-zinc-400">Calendar P&L</span>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 dark:text-zinc-400">This Week (Mon–Sun)</span>
+                    <span
+                      className={`font-mono-num font-semibold ${
+                        summary.thisWeekPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {summary.thisWeekPnL >= 0 ? '+' : ''}
+                      {formatINR(summary.thisWeekPnL)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 dark:text-zinc-400">This Month's Realized</span>
+                    <span
+                      className={`font-mono-num font-semibold ${
+                        summary.thisMonthPnL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    >
+                      {summary.thisMonthPnL >= 0 ? '+' : ''}
+                      {formatINR(summary.thisMonthPnL)}
+                    </span>
+                  </div>
+                  <div className="border-t border-zinc-100 pt-2.5 flex items-center justify-between text-xs font-semibold dark:border-zinc-800">
+                    <span className="text-zinc-700 dark:text-zinc-300">Overall Win Rate</span>
+                    <span className="font-mono-num text-blue-600 dark:text-blue-400">
+                      {summary.winRate.toFixed(1)}% ({summary.winningTradesCount}/{summary.closedTradesCount})
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Capital Inflow & Liquidity */}
+              <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-[#111726]">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800/80">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-300">
+                    Capital Ledger Snapshot
+                  </span>
+                  <button
+                    onClick={() => setActiveTab('capital')}
+                    className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                  >
+                    Manage →
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 dark:text-zinc-400">Total Capital Injected</span>
+                    <span className="font-mono-num font-medium text-zinc-900 dark:text-zinc-200">
+                      {formatINR(summary.totalDeposited)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 dark:text-zinc-400">Total Funds Withdrawn</span>
+                    <span className="font-mono-num font-medium text-zinc-900 dark:text-zinc-200">
+                      {formatINR(summary.totalWithdrawn)}
+                    </span>
+                  </div>
+                  <div className="border-t border-zinc-100 pt-2.5 flex items-center justify-between text-xs font-semibold dark:border-zinc-800">
+                    <span className="text-zinc-700 dark:text-zinc-300">Available Liquid Cash</span>
+                    <span className="font-mono-num text-emerald-600 dark:text-emerald-400">
+                      {formatINR(summary.availableCash)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Open Position CMP Update Bar if open trades exist */}
+            {openTrades.length > 0 && (
+              <div className="rounded-xl border border-amber-300/40 bg-amber-500/5 px-4 py-3 dark:border-amber-500/20 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                  <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">
+                    <strong className="font-semibold text-amber-600 dark:text-amber-400">{openTrades.length} Open Positions</strong> currently active in portfolio. Unrealized P&L is estimated at{' '}
+                    <span className={`font-mono-num font-bold ${summary.currentUnrealizedPnL >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                      {summary.currentUnrealizedPnL >= 0 ? '+' : ''}{formatINR(summary.currentUnrealizedPnL)}
+                    </span>.
+                  </span>
                 </div>
                 <button
                   onClick={() => setActiveTab('market')}
-                  className="rounded-xl bg-amber-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-amber-500 cursor-pointer"
+                  className="rounded-lg bg-amber-600 hover:bg-amber-500 text-white px-3 py-1 text-xs font-semibold shadow-xs cursor-pointer"
                 >
-                  Update CMP Prices
+                  Configure CMP Prices
                 </button>
               </div>
             )}
 
-            {/* Recent Trades Table Preview */}
+            {/* Recent Trades Data Grid */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
-                  Recent Trading Activity
-                </h3>
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                    Recent Execution Ledger
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Showing latest 5 trades recorded across brokerages
+                  </p>
+                </div>
                 <button
                   onClick={() => setActiveTab('trades')}
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 cursor-pointer"
+                  className="text-xs font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 cursor-pointer"
                 >
-                  View All ({trades.length}) →
+                  View All {trades.length} Records →
                 </button>
               </div>
               <TradeLedger
@@ -529,21 +628,21 @@ export function App() {
         {/* ---------------- 2. TRADES LEDGER TAB ---------------- */}
         {activeTab === 'trades' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Trading Records Ledger
+                <h2 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
+                  Quantitative Trade Ledger
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Search, filter, edit, or delete any trade record. Calculations update instantly.
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Comprehensive audit trail of executions, charges, slippage, and net P&L.
                 </p>
               </div>
               <button
                 onClick={handleOpenAddTrade}
-                className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 cursor-pointer"
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
               >
-                <PlusCircle className="h-4 w-4" />
-                Add New Trade
+                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                Record Trade
               </button>
             </div>
 
